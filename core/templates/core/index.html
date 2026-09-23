@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Touch Typing Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#10130f; --surface:#181d17; --surface-2:#22291f; --border:#343d30; --text:#e6e9df; --text-muted:#929b87; --accent:#d6f36a; --accent-dim:#303b21; --success:#b6e36c; --error:#ff806d; --error-dim:#401e19; --warn:#e7be61; --mono:'IBM Plex Mono',monospace; --sans:'Inter',sans-serif; --radius:14px; --transition:.18s ease; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(ellipse at 50% -25%,#354029 0,transparent 50%),var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; }
+    header { min-height:68px; padding:0 clamp(1rem,5vw,4rem); display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #ffffff12; }
+    header .logo { color:var(--accent); font:600 .9rem var(--mono); letter-spacing:.06em; text-transform:uppercase; }
+    header .clock { color:var(--text-muted); font: .8rem var(--mono); }
+    main { width:min(920px,calc(100% - 2rem)); margin:0 auto; padding:clamp(2rem,7vh,5rem) 0 3rem; display:flex; flex-direction:column; align-items:stretch; gap:1.1rem; }
+    .race-panel { order:-1; text-align:center; padding:0 0 1.4rem; }
+    .race-panel h2 { font-size:clamp(2.2rem,7vw,4.3rem); letter-spacing:-.07em; line-height:1; margin:0 0 .8rem; font-weight:600; }
+    .race-panel h2 em { color:var(--accent); font-style:normal; }
+    #identity-label { color:var(--text-muted); margin:.25rem 0 1rem; }
+    .race-panel button, .race-panel a { font:inherit; }
+    .race-panel button { border:1px solid var(--border); color:var(--text); background:var(--surface-2); padding:.65rem .95rem; margin:.25rem; border-radius:999px; cursor:pointer; text-decoration:none; transition:transform var(--transition),border-color var(--transition),background var(--transition); }
+    .race-panel button:hover { transform:translateY(-2px); border-color:var(--accent); }
+    #guest-choice, #account-choice { font-size:.86rem; }
+    .identity-choice { display:inline-flex; align-items:center; gap:.5rem; }
+    #launch-race { display:block; margin:1.1rem auto .9rem; padding:.9rem 2rem; background:var(--accent); color:#1c2413; border:0; font-weight:700; font-size:1rem; box-shadow:0 8px 35px #d6f36a24; }
+    #launch-race:disabled { opacity:.35; cursor:not-allowed; transform:none; }
+    .mode-options { display:flex; justify-content:center; flex-wrap:wrap; gap:.7rem; margin:.8rem auto; }
+    .mode-card { min-width:190px; text-align:left; border-radius:12px!important; padding:1rem 1.2rem!important; background:#191f18!important; }
+    .mode-card strong { display:block; font-size:1rem; margin-bottom:.35rem; }
+    .mode-card small { display:block; color:var(--text-muted); }
+    #friend-options { margin:1rem auto; }
+    #room-code { background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:999px; padding:.65rem .9rem; width:150px; text-transform:uppercase; }
+    #room-status { min-height:1.3em; color:var(--accent); font: .8rem var(--mono); }
+    .room-share-card { width:min(560px,100%); margin:1rem auto 1.3rem; padding:1.1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; text-align:left; border:1px solid #d6f36a55; border-radius:14px; background:linear-gradient(115deg,#252e1e,#1b2118); box-shadow:0 12px 38px #0003; }
+    .room-share-copy { min-width:0; }
+    .room-share-label { display:block; margin-bottom:.35rem; font: .64rem var(--mono); letter-spacing:.13em; text-transform:uppercase; color:var(--text-muted); }
+    .room-share-code { display:block; color:var(--accent); font:700 1.45rem var(--mono); letter-spacing:.16em; font-variant-numeric:tabular-nums; }
+    .room-share-hint { color:var(--text-muted); font-size:.77rem; margin-top:.3rem; }
+    #copy-room-code { flex:none; background:var(--accent)!important; color:#1c2413!important; font-size:.8rem; font-weight:700; }
+    #race-list { width:min(560px,100%); margin:1rem auto; text-align:left; list-style:none; padding:0; color:var(--text-muted); display:grid; gap:.55rem; }
+    .racer-row { display:grid; grid-template-columns:minmax(120px,1fr) auto auto; align-items:center; gap:.9rem; padding:.8rem 1rem; border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+    .racer-name { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .racer-progress { color:var(--text-muted); font:.78rem var(--mono); font-variant-numeric:tabular-nums; }
+    .racer-metrics { display:flex; gap:.7rem; color:var(--accent); font:.76rem var(--mono); white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .text-box { position:relative; width:100%; max-width:none; min-height:200px; padding:2rem clamp(1.2rem,5vw,3rem); border:1px solid var(--border); border-radius:var(--radius); background:linear-gradient(140deg,#1b201a,#151914); overflow:hidden; }
+    .text-box-label { color:var(--accent); font: .68rem var(--mono); text-transform:uppercase; letter-spacing:.14em; margin-bottom:1rem; }
+    #text-display { font:clamp(1.1rem,2.2vw,1.55rem)/1.9 var(--mono); color:#c7cebd; word-break:break-word; min-height:4rem; transition:filter .45s ease,opacity .45s ease; }
+    .text-box.locked #text-display { filter:blur(7px); opacity:.52; user-select:none; }
+    .text-box.locked::after { content:'YOUR TEXT IS WAITING'; position:absolute; inset:auto 0 1.3rem; text-align:center; color:#d6f36a88; font: .65rem var(--mono); letter-spacing:.2em; pointer-events:none; }
+    #text-display .char-correct { color:var(--success); } #text-display .char-incorrect { color:var(--error); text-decoration:underline; } #text-display .char-pending { color:var(--text-muted); }
+    .input-wrap, .status-bar, #results-card { max-width:none; width:100%; }
+    #input-field { padding:1rem 1.2rem; background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); font:1rem var(--mono); }
+    #input-field:focus { border-color:var(--accent); }
+    #input-field:disabled { opacity:.38; }
+    .status-bar { border:1px solid var(--border); border-radius:10px; background:var(--surface); padding:.8rem 1rem; font:.8rem var(--mono); }
+    #wpm-text { color:var(--accent); }
+    #results-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.3rem; text-align:center; }
+    footer { color:var(--text-muted); padding:1rem; display:flex; justify-content:center; gap:1rem; font-size:.75rem; }
+    .keybind kbd { font: .7rem var(--mono); border:1px solid var(--border); background:var(--surface); border-radius:4px; padding:.2rem .4rem; color:var(--accent); }
+    body.light { --bg:#e9ecdf; --surface:#f7f8f1; --surface-2:#e2e7d5; --border:#c7cfb7; --text:#252b20; --text-muted:#737d67; --accent:#536b27; --accent-dim:#d8e1c3; }
+    @media(max-width:600px) { main { padding-top:2.5rem; } .race-panel h2 { font-size:2.7rem; } .mode-options { flex-direction:column; align-items:stretch; } .mode-card { width:100%; } .text-box { min-height:180px; } }
+    /* ── Design tokens ─────────────────────────────────────────── */
+    :root {
+      --bg:          #0f1117;
+      --surface:     #181b24;
+      --surface-2:   #1e2130;
+      --border:      #2a2f42;
+      --text:        #c8cfe8;
+      --text-muted:  #5a6285;
+      --accent:      #5b8af0;
+      --accent-dim:  #1e2d55;
+      --success:     #4ade80;
+      --error:       #f87171;
+      --error-dim:   #3b1010;
+      --warn:        #fbbf24;
+      --mono:        'IBM Plex Mono', monospace;
+      --sans:        'Inter', sans-serif;
+      --radius:      6px;
+      --transition:  0.15s ease;
+    }
+
+    /* ── Reset & base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header (mirrors Textual's Header widget) ──────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1.5rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    header .logo {
+      font-family: var(--mono);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+
+    header .clock {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Main layout ───────────────────────────────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      gap: 1.5rem;
+    }
+
+    /* ── Text display box (mirrors TextBox widget) ─────────────── */
+    /*
+      Textual: yield Static("Loading initial text...", id="text_display")
+      Web:     <div id="text-display"> with character-level spans
+    */
+    .text-box {
+      width: 100%;
+      max-width: 720px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      min-height: 7rem;
+    }
+
+    .text-box-label {
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+    }
+
+    #text-display {
+      font-family: var(--mono);
+      font-size: 1.25rem;
+      line-height: 1.75;
+      color: var(--text-muted);
+      word-break: break-word;
+      min-height: 2.5rem;
+    }
+
+    /* Character coloring during typing */
+    #text-display .char-correct  { color: var(--success); }
+    #text-display .char-incorrect { color: var(--error); text-decoration: underline; }
+    #text-display .char-pending  { color: var(--text-muted); }
+    #text-display .char-cursor   {
+      border-left: 2px solid var(--accent);
+      margin-left: -1px;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      50% { border-color: transparent; }
+    }
+
+    /* ── Input field ───────────────────────────────────────────── */
+    /*
+      Textual: yield Input(placeholder="Type here...", id="input_field")
+      + CSS:   Input.error { background: $error 20%; border: heavy $error; }
+    */
+    .input-wrap {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    #input-field {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      font-family: var(--mono);
+      font-size: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      outline: none;
+      transition: border-color var(--transition), background var(--transition);
+      caret-color: var(--accent);
+    }
+
+    #input-field::placeholder { color: var(--text-muted); }
+
+    #input-field:focus {
+      border-color: var(--accent);
+    }
+
+    /* Mirrors: Input.error { background: $error 20%; border: heavy $error; } */
+    #input-field.error {
+      background: var(--error-dim);
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    #input-field:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ── Status bar (mirrors StatusBar widget) ─────────────────── */
+    /*
+      Textual:
+        StatusBar { height: 1; background: $accent; }
+        reactive status → watch_status() changes color
+        reactive wpm    → watch_wpm()    updates text
+    */
+    .status-bar {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--accent-dim);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.5rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+
+    #status-text { display: flex; align-items: center; gap: 0.5rem; }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex-shrink: 0;
+      transition: background var(--transition);
+    }
+
+    /* watch_status() color logic ported */
+    .status-dot.ready     { background: var(--text-muted); }
+    .status-dot.typing    { background: var(--warn); }
+    .status-dot.completed { background: var(--success); }
+    .status-dot.loading   { background: var(--accent); animation: pulse 1s infinite; }
+
+    @keyframes pulse { 50% { opacity: 0.3; } }
+
+    #status-label { color: var(--text); }
+    #wpm-text { color: var(--success); font-weight: 600; }
+
+    /* ── Results card (shown on completion) ───────────────────── */
+    #results-card {
+      display: none;
+      width: 100%;
+      max-width: 720px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 2rem;
+      text-align: center;
+    }
+
+    #results-card.visible { display: block; }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .result-item .value {
+      font-family: var(--mono);
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .result-item .label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    /* ── Footer / keybindings (mirrors Textual's Footer widget) ── */
+    /*
+      Textual BINDINGS:
+        ("r", "reset",      "Reset the test")
+        ("g", "regenerate", "Generate new text")
+        ("d", "toggle_dark","Toggle theme")
+        ("q", "quit",       "Quit the app")
+      Web: same keys, no 'q' quit (browser handles that)
+    */
+    footer {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      padding: 0.75rem 1.5rem;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .keybind {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .keybind kbd {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.1rem 0.35rem;
+      color: var(--accent);
+    }
+    .race-panel { width:100%; max-width:720px; padding:1rem; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); }
+    .race-panel input, .race-panel button { padding:.6rem; margin:.25rem; border-radius:4px; }
+    .race-panel button { background:var(--accent); color:white; border:0; cursor:pointer; }
+    #race-list { padding-left:1.5rem; line-height:1.8; }
+
+    /* ── Light theme (mirrors toggle_dark) ────────────────────── */
+    body.light {
+      --bg:          #f5f6fa;
+      --surface:     #ffffff;
+      --surface-2:   #eef0f7;
+      --border:      #d0d5e8;
+      --text:        #1e2130;
+      --text-muted:  #8a93b5;
+      --accent-dim:  #dce6fc;
+    }
+
+    /* ── Responsive ────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      #text-display { font-size: 1rem; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+    }
+    /* Keep the race desk treatment authoritative over the original demo styles. */
+    body { background:radial-gradient(ellipse at 50% -25%,#354029 0,transparent 50%),var(--bg); }
+    header { background:transparent; border-color:#ffffff12; padding:0 clamp(1rem,5vw,4rem); }
+    main { width:min(920px,calc(100% - 2rem)); margin:0 auto; padding:clamp(2rem,7vh,5rem) 0 3rem; }
+    .race-panel { order:-1; max-width:none; padding:0 0 1.4rem; border:0; background:transparent; text-align:center; }
+    .race-panel h2 { font-size:clamp(2.2rem,7vw,4.3rem); letter-spacing:-.07em; line-height:1; margin:0 0 .8rem; font-weight:600; }
+    .race-panel h2 em { color:var(--accent); font-style:normal; }
+    .race-panel button { border:1px solid var(--border); color:var(--text); background:var(--surface-2); padding:.65rem .95rem; margin:.25rem; border-radius:999px; cursor:pointer; transition:transform var(--transition),border-color var(--transition); }
+    .race-panel button:hover { transform:translateY(-2px); border-color:var(--accent); }
+    #launch-race { display:block; margin:1.1rem auto .9rem; padding:.9rem 2rem; background:var(--accent); color:#1c2413; border:0; font-weight:700; font-size:1rem; box-shadow:0 8px 35px #d6f36a24; }
+    #launch-race:disabled { opacity:.35; cursor:not-allowed; transform:none; }
+    .mode-options { display:flex; justify-content:center; flex-wrap:wrap; gap:.7rem; margin:.8rem auto; }
+    .mode-card { min-width:190px; text-align:left; border-radius:12px!important; padding:1rem 1.2rem!important; background:#191f18!important; }
+    .mode-card strong,.mode-card small { display:block; } .mode-card small { color:var(--text-muted); margin-top:.3rem; }
+    #friend-options { margin:1rem auto; }
+    #room-code { background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:999px; padding:.65rem .9rem; width:150px; text-transform:uppercase; }
+    #room-status { min-height:0; color:var(--accent); font: .8rem var(--mono); }
+    .room-share-card { width:min(560px,100%); margin:1rem auto 1.3rem; padding:1.1rem 1.25rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; text-align:left; border:1px solid #d6f36a55; border-radius:14px; background:linear-gradient(115deg,#252e1e,#1b2118); box-shadow:0 12px 38px #0003; }
+    .room-share-label { display:block; margin-bottom:.35rem; font:.64rem var(--mono); letter-spacing:.13em; text-transform:uppercase; color:var(--text-muted); }
+    .room-share-code { display:block; color:var(--accent); font:700 1.45rem var(--mono); letter-spacing:.16em; font-variant-numeric:tabular-nums; }
+    .room-share-hint { color:var(--text-muted); font-size:.77rem; margin-top:.3rem; }
+    #copy-room-code { flex:none; background:var(--accent)!important; color:#1c2413!important; font-size:.8rem; font-weight:700; }
+    #race-list { width:min(560px,100%); max-width:none; margin:1rem auto; text-align:left; list-style:none; padding:0; color:var(--text-muted); display:grid; gap:.55rem; }
+    .racer-row { display:grid; grid-template-columns:minmax(120px,1fr) auto auto; align-items:center; gap:.9rem; padding:.8rem 1rem; border:1px solid var(--border); border-radius:11px; background:var(--surface); }
+    .racer-name { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .racer-progress,.racer-metrics { font:.76rem var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .racer-progress { color:var(--text-muted); }
+    .racer-metrics { display:flex; gap:.7rem; color:var(--accent); }
+    .text-box { position:relative; max-width:none; min-height:200px; padding:2rem clamp(1.2rem,5vw,3rem); border:1px solid var(--border); border-radius:var(--radius); background:linear-gradient(140deg,#1b201a,#151914); overflow:hidden; }
+    .text-box.locked #text-display { filter:blur(7px); opacity:.52; user-select:none; }
+    .text-box.locked::after { content:'YOUR TEXT IS WAITING'; position:absolute; inset:auto 0 1.3rem; text-align:center; color:#d6f36a88; font: .65rem var(--mono); letter-spacing:.2em; pointer-events:none; }
+    .input-wrap,.status-bar,#results-card { max-width:none; }
+    #input-field { padding:1rem 1.2rem; background:var(--surface); border:1px solid var(--border); border-radius:10px; font:1rem var(--mono); }
+    .status-bar { border:1px solid var(--border); border-radius:10px; background:var(--surface); padding:.8rem 1rem; }
+    footer { background:transparent; border-top:1px solid #ffffff12; }
+    @media(max-width:600px) { .race-panel h2 { font-size:2.7rem; } .mode-options { flex-direction:column; align-items:stretch; } .mode-card { width:100%; } }
+  </style>
+</head>
+<body>
+
+  <!-- Header — mirrors Textual's Header(show_clock=True) -->
+  <header>
+    <span class="logo">⌨ Touch Typing Test</span>
+    <span class="clock" id="clock">--:--:--</span>
+  </header>
+
+  <main>
+
+    <section class="race-panel" aria-label="Start a typing race">
+      <p style="font: .7rem var(--mono);letter-spacing:.18em;color:var(--accent);text-transform:uppercase;margin-bottom:1rem">A little focus goes a long way</p>
+      <h2>Find your <em>rhythm.</em></h2>
+      <p id="identity-label">Choose your racer identity to begin.</p>
+      <button id="guest-choice" type="button">Continue as guest</button>
+      {% if user.is_authenticated %}
+        <button id="account-choice" type="button">Race as {{ user.username }}</button>
+        <form method="post" action="/account/logout/" style="display:inline">{% csrf_token %}<button type="submit">Sign out</button></form>
+      {% else %}
+        <p><a href="/account/login/" style="color:var(--text-muted)">Sign in</a> · <a href="#signup" id="signup-toggle" style="color:var(--text-muted)">Create account</a></p>
+        <form method="post" action="/account/signup/" id="signup-form" style="display:none">{% csrf_token %}{{ signup_form.as_p }}
+          <label>Username <input name="username" required></label><label>Password <input type="password" name="password1" required></label><label>Confirm <input type="password" name="password2" required></label><button>Create account</button></form>
+      {% endif %}
+      <button id="launch-race" type="button" disabled>Start race <span aria-hidden="true">↗</span></button>
+      <div id="race-actions" hidden>
+        <p style="color:var(--text-muted);font-size:.85rem">Pick your lane.</p>
+        <div class="mode-options">
+          <button class="mode-card" id="start-race" type="button"><strong>Race alone <span>↗</span></strong><small>A quiet run against the clock.</small></button>
+          <button class="mode-card" id="friend-mode" type="button"><strong>Race a friend <span>＋</span></strong><small>Share a room or join their code.</small></button>
+        </div>
+        <div id="friend-options" hidden>
+          <button id="create-friend-race" type="button">Create room</button>
+          <span style="color:var(--text-muted)">or</span>
+          <input id="room-code" maxlength="8" placeholder="ROOM CODE" aria-label="Room code">
+          <button id="join-race" type="button">Join room</button>
+        </div>
+        <div id="room-status" aria-live="polite"></div><ol id="race-list"></ol>
+      </div>
+    </section>
+
+    <!--
+      TextBox widget (Textual) → .text-box div (Web)
+      Shows character-by-character highlighting as the user types.
+      In Textual, this was a Static widget updated via text_widget.update(self.target_text).
+      Here, JS renders individual <span> elements for correct/incorrect/pending chars.
+    -->
+    <div class="text-box locked" id="quote-card">
+      <div class="text-box-label">Quote to type</div>
+      <div id="text-display">
+        <span style="color:var(--text-muted); font-style:italic;">Loading quote…</span>
+      </div>
+    </div>
+
+    <!--
+      Input widget (Textual) → #input-field (Web)
+      The .error class mirrors: Input.error { background: $error 20%; border: heavy $error; }
+    -->
+    <div class="input-wrap">
+      <input
+        type="text"
+        id="input-field"
+        placeholder="Type here… (or press G for a new quote)"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        disabled
+      />
+    </div>
+
+    <!--
+      StatusBar widget (Textual) → .status-bar (Web)
+      Reactive status + wpm are now plain DOM updates from JS.
+    -->
+    <div class="status-bar">
+      <div id="status-text">
+        <div class="status-dot loading" id="status-dot"></div>
+        <span id="status-label">Loading…</span>
+      </div>
+      <span id="wpm-text">0 WPM</span>
+    </div>
+
+    <!-- Results card: shown on completion (no Textual equivalent — bonus feature) -->
+    <div id="results-card">
+      <div style="font-size:0.8rem; color:var(--text-muted);">Test complete</div>
+      <div class="results-grid">
+        <div class="result-item">
+          <div class="value" id="final-wpm">0</div>
+          <div class="label">WPM</div>
+        </div>
+        <div class="result-item">
+          <div class="value" id="final-acc">0%</div>
+          <div class="label">Accuracy</div>
+        </div>
+        <div class="result-item">
+          <div class="value" id="final-time">0s</div>
+          <div class="label">Time</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer — mirrors Textual's Footer with BINDINGS -->
+  <footer>
+    <div class="keybind"><kbd>R</kbd> Reset</div>
+    <div class="keybind"><kbd>G</kbd> New quote</div>
+    <div class="keybind"><kbd>D</kbd> Toggle theme</div>
+  </footer>
+
+  <script>
+    let raceIdentity = null, activeRace = null, racePoll = null, progressTimer = null;
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    const identityLabel = document.getElementById('identity-label');
+    document.getElementById('guest-choice').addEventListener('click', () => chooseRaceIdentity('Guest'));
+    document.getElementById('account-choice')?.addEventListener('click', () => chooseRaceIdentity('Account'));
+    document.getElementById('signup-toggle')?.addEventListener('click', e => { e.preventDefault(); document.getElementById('signup-form').style.display = 'block'; });
+    function chooseRaceIdentity(kind) {
+      raceIdentity = kind;
+      identityLabel.textContent = kind === 'Account' ? 'Signed-in account selected.' : 'Guest selected. You can race without an account.';
+      document.getElementById('launch-race').disabled = false;
+    }
+    async function raceRequest(url, method='GET', body=null) {
+      const options = {method, headers: {'X-CSRFToken': csrfToken}};
+      if (body) { options.headers['Content-Type'] = 'application/x-www-form-urlencoded'; options.body = new URLSearchParams(body); }
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Race request failed');
+      return data;
+    }
+    function raceName() { return raceIdentity === 'Guest' ? (sessionStorage.raceName ||= `Guest-${Math.floor(1000+Math.random()*9000)}`) : ''; }
+    async function enterRace(code=null) {
+      if (!raceIdentity) return;
+      if (racePoll) clearInterval(racePoll);
+      if (progressTimer) clearInterval(progressTimer);
+      const body = {name: raceName()};
+      let data;
+      if (code) data = await raceRequest(`/race/${encodeURIComponent(code)}/join/`, 'POST', body);
+      else {
+        const quoteResponse = await fetch('/quote/'); const quoteData = await quoteResponse.json();
+        data = await raceRequest('/race/create/', 'POST', {...body, quote: quoteData.quote});
+      }
+      activeRace = data.code;
+      targetText = data.quote; actionReset(); renderText('');
+      document.getElementById('quote-card').classList.remove('locked');
+      document.getElementById('race-actions').querySelector('.mode-options').hidden = true;
+      document.getElementById('friend-options').hidden = true;
+      document.getElementById('launch-race').hidden = true;
+      identityLabel.textContent = raceIdentity === 'Account' ? `Racing as {{ user.username|escapejs }} · room ${data.code}` : `Racing as ${data.name} · room ${data.code}`;
+      document.getElementById('room-status').innerHTML = `<div class="room-share-card"><div class="room-share-copy"><span class="room-share-label">Invite a friend · room code</span><strong class="room-share-code">${escapeHtml(activeRace)}</strong><div class="room-share-hint">Send this code to anyone you want in your race.</div></div><button id="copy-room-code" type="button" data-code="${escapeHtml(activeRace)}">Copy code</button></div>`;
+      inputField.disabled = false; inputField.focus();
+      racePoll = setInterval(refreshRace, 1200); refreshRace();
+    }
+    async function refreshRace() {
+      if (!activeRace) return;
+      try {
+        const state = await raceRequest(`/race/${activeRace}/state/`);
+        document.getElementById('race-list').innerHTML = state.participants.map(p => `<li class="racer-row"><span class="racer-name">${escapeHtml(p.name)}${p.finished ? ' ✓' : ''}</span><span class="racer-progress">${p.progress}%</span><span class="racer-metrics"><span>${p.wpm} WPM</span><span>${p.accuracy}% ACC</span></span></li>`).join('');
+      } catch (e) { document.getElementById('room-status').textContent = e.message; }
+    }
+    function escapeHtml(value) { const el = document.createElement('span'); el.textContent = value; return el.innerHTML; }
+    document.getElementById('room-status').addEventListener('click', async event => {
+      const button = event.target.closest('#copy-room-code');
+      if (!button) return;
+      try { await navigator.clipboard.writeText(button.dataset.code); button.textContent = 'Copied'; }
+      catch (_) { button.textContent = button.dataset.code; }
+    });
+    document.getElementById('launch-race').addEventListener('click', () => {
+      if (raceIdentity) document.getElementById('race-actions').hidden = false;
+    });
+    document.getElementById('start-race').addEventListener('click', () => enterRace().catch(e => document.getElementById('room-status').textContent=e.message));
+    document.getElementById('friend-mode').addEventListener('click', () => { document.getElementById('friend-options').hidden = false; });
+    document.getElementById('create-friend-race').addEventListener('click', () => enterRace().catch(e => document.getElementById('room-status').textContent=e.message));
+    document.getElementById('join-race').addEventListener('click', () => enterRace(document.getElementById('room-code').value.trim()).catch(e => document.getElementById('room-status').textContent=e.message));
+    /**
+     * TypingTest — Web port of the Textual app
+     *
+     * Every method is annotated with its Textual counterpart.
+     */
+
+    // ── State (mirrors TypingTest.__init__ instance vars) ───────
+    let targetText   = '';       // self.target_text
+    let startTime    = null;     // self.start_time  (Date.now() instead of time.time())
+    let wpmInterval  = null;     // self.timer
+    let isCompleted  = false;
+
+    // ── DOM references ───────────────────────────────────────────
+    const textDisplay  = document.getElementById('text-display');
+    const inputField   = document.getElementById('input-field');
+    const statusDot    = document.getElementById('status-dot');
+    const statusLabel  = document.getElementById('status-label');
+    const wpmText      = document.getElementById('wpm-text');
+    const resultsCard  = document.getElementById('results-card');
+    const finalWpm     = document.getElementById('final-wpm');
+    const finalAcc     = document.getElementById('final-acc');
+    const finalTime    = document.getElementById('final-time');
+    const clock        = document.getElementById('clock');
+
+    // ── Clock (mirrors Header(show_clock=True)) ──────────────────
+    function tickClock() {
+      clock.textContent = new Date().toLocaleTimeString();
+    }
+    tickClock();
+    setInterval(tickClock, 1000);
+
+    // ── setStatus — mirrors StatusBar.watch_status() ─────────────
+    function setStatus(status) {
+      statusDot.className = 'status-dot ' + status.toLowerCase();
+      statusLabel.textContent = status;
+    }
+
+    // ── setWpm — mirrors StatusBar.watch_wpm() ───────────────────
+    function setWpm(wpm) {
+      wpmText.textContent = `${wpm} WPM`;
+    }
+
+    // ── renderText — renders char-by-char spans over target text ─
+    //   Textual used a plain Static widget; we do per-char coloring.
+    function renderText(typed) {
+      if (!targetText) return;
+      let html = '';
+      for (let i = 0; i < targetText.length; i++) {
+        const ch = targetText[i] === ' ' ? '&nbsp;' : targetText[i];
+        if (i < typed.length) {
+          const cls = typed[i] === targetText[i] ? 'char-correct' : 'char-incorrect';
+          html += `<span class="${cls}">${ch}</span>`;
+        } else if (i === typed.length) {
+          html += `<span class="char-pending char-cursor">${ch}</span>`;
+        } else {
+          html += `<span class="char-pending">${ch}</span>`;
+        }
+      }
+      // cursor at end when fully typed
+      if (typed.length >= targetText.length) {
+        // nothing extra
+      }
+      textDisplay.innerHTML = html;
+    }
+
+    // ── updateWpm — mirrors TypingTest.update_wpm() ──────────────
+    //
+    //   Original Python:
+    //     elapsed_seconds = time.time() - self.start_time
+    //     correct_chars = sum(1 for i, char in enumerate(typed_text)
+    //                         if i < len(self.target_text) and char == self.target_text[i])
+    //     elapsed_minutes = elapsed_seconds / 60.0
+    //     net_wpm = max(0, int((correct_chars / 5.0) / elapsed_minutes))
+    //
+    function updateWpm() {
+      if (!startTime) return;
+      const elapsedSeconds = (Date.now() - startTime) / 1000;
+      if (elapsedSeconds <= 0) return;
+
+      const typed = inputField.value;
+      let correctChars = 0;
+      for (let i = 0; i < typed.length; i++) {
+        if (i < targetText.length && typed[i] === targetText[i]) {
+          correctChars++;
+        }
+      }
+
+      const elapsedMinutes = elapsedSeconds / 60.0;
+      const netWpm = Math.max(0, Math.floor((correctChars / 5.0) / elapsedMinutes));
+      setWpm(netWpm);
+      return { netWpm, correctChars, elapsedSeconds };
+    }
+
+    // ── handleInputChanged — mirrors @on(Input.Changed) handler ──
+    //
+    //   Original Python logic (1-to-1 port):
+    //     is_mistake = not self.target_text.startswith(typed_text)   → .error class
+    //     if self.start_time is None: self.start_time = time.time()  → startTime = Date.now()
+    //     if self.timer is None: self.timer = self.set_interval(...)  → wpmInterval
+    //     if len(typed_text) >= len(self.target_text): [complete]    → same check
+    //
+    inputField.addEventListener('input', () => {
+      if (isCompleted) return;
+
+      const typed = inputField.value;
+
+      // Empty input → reset (mirrors: if not typed_text.strip(): self.action_reset())
+      if (!typed.trim()) {
+        actionReset();
+        return;
+      }
+
+      // Mistake detection: mirrors `not self.target_text.startswith(typed_text)`
+      const isMistake = !targetText.startsWith(typed);
+      inputField.classList.toggle('error', isMistake);
+
+      // Render character highlighting
+      renderText(typed);
+
+      // Start timer on first character (mirrors: if self.start_time is None)
+      if (startTime === null) {
+        startTime = Date.now();
+      }
+
+      // Start interval if not running (mirrors: if self.timer is None)
+      if (wpmInterval === null) {
+        wpmInterval = setInterval(updateWpm, 1000);
+      }
+
+      setStatus('Typing');
+
+      if (activeRace) {
+        const progress = Math.min(100, Math.floor((typed.length / targetText.length) * 100));
+        const correct = [...typed].filter((ch, i) => i < targetText.length && ch === targetText[i]).length;
+        // Match the final result card: accuracy is correct characters / target length.
+        const accuracy = targetText.length ? Math.round(correct / targetText.length * 100) : 0;
+        const wpm = Math.max(0, Math.floor((correct / 5) / ((Date.now() - startTime) / 60000)));
+        raceRequest(`/race/${activeRace}/progress/`, 'POST', {progress, wpm, accuracy}).catch(() => {});
+      }
+
+      // Completion check (mirrors: if len(typed_text) >= len(self.target_text))
+      if (typed.length >= targetText.length && targetText !== '') {
+        // Stop timer (mirrors: self.timer.stop(); self.timer = None)
+        clearInterval(wpmInterval);
+        wpmInterval = null;
+
+        // Final WPM (mirrors: self.update_wpm() then freeze)
+        const result = updateWpm();
+        setStatus('Completed');
+        inputField.disabled = true;
+        isCompleted = true;
+
+        // Bonus: show results card with accuracy
+        const typed2 = inputField.value;
+        let correct = 0;
+        for (let i = 0; i < typed2.length && i < targetText.length; i++) {
+          if (typed2[i] === targetText[i]) correct++;
+        }
+        const acc = Math.round((correct / targetText.length) * 100);
+        finalWpm.textContent  = result ? result.netWpm : 0;
+        finalAcc.textContent  = acc + '%';
+        finalTime.textContent = result ? Math.round(result.elapsedSeconds) + 's' : '0s';
+        resultsCard.classList.add('visible');
+      }
+    });
+
+    // ── actionReset — mirrors TypingTest.action_reset() ──────────
+    //
+    //   Original Python:
+    //     self.timer.stop(); self.timer = None
+    //     self.start_time = None
+    //     bar.status = "Ready"; bar.wpm = 0
+    //     input_widget.remove_class("error"); input_widget.disabled = False
+    //     input_widget.clear(); input_widget.focus()
+    //
+    function actionReset() {
+      if (wpmInterval !== null) {
+        clearInterval(wpmInterval);
+        wpmInterval = null;
+      }
+      startTime   = null;
+      isCompleted = false;
+
+      setStatus('Ready');
+      setWpm(0);
+
+      inputField.classList.remove('error');
+      inputField.disabled = false;
+      inputField.value    = '';
+      inputField.focus();
+
+      resultsCard.classList.remove('visible');
+      renderText('');
+    }
+
+    // ── actionRegenerate — mirrors TypingTest.action_regenerate() ─
+    //
+    //   Original Python:
+    //     self.action_reset()
+    //     text_widget.update("Fetching new text...")
+    //     async with httpx.AsyncClient() as client:
+    //         res = await client.get("https://dummyjson.com/quotes/random")
+    //         self.target_text = res.json()["quote"]
+    //     text_widget.update(self.target_text)
+    //
+    //   Here: calls Django's /quote/ view (which wraps httpx internally)
+    //
+    async function actionRegenerate() {
+      actionReset();
+      targetText = '';
+      textDisplay.innerHTML = '<span style="color:var(--text-muted); font-style:italic;">Fetching new quote…</span>';
+      setStatus('Loading');
+      inputField.disabled = true;
+
+      try {
+        const res  = await fetch('/quote/');
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error);
+
+        targetText = data.quote;
+        renderText('');
+
+        // Optionally show author in a subtle way
+        if (data.author) {
+          textDisplay.insertAdjacentHTML('afterend',
+            `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.4rem;font-family:var(--mono);">— ${data.author}</div>`
+          );
+        }
+
+        inputField.disabled = !activeRace;
+        if (activeRace) inputField.focus();
+        setStatus('Ready');
+
+      } catch (err) {
+        textDisplay.innerHTML = `<span style="color:var(--error);">Failed to load quote: ${err.message}</span>`;
+        setStatus('Ready');
+        inputField.disabled = !activeRace;
+      }
+    }
+
+    // ── Keybindings — mirrors BINDINGS in Textual app ────────────
+    //
+    //   Textual:
+    //     ("r", "reset",      "Reset the test")
+    //     ("g", "regenerate", "Generate new text")
+    //     ("d", "toggle_dark","Toggle theme")
+    //     ("q", "quit",       "Quit the app")      ← browser handles q, omit
+    //
+    document.addEventListener('keydown', (e) => {
+      // Only fire when input is NOT focused (or for R/G which work either way)
+      const tag = document.activeElement.tagName;
+      const inInput = tag === 'INPUT' || tag === 'TEXTAREA';
+
+      if (e.key === 'r' && !inInput) {
+        e.preventDefault();
+        actionReset();
+      }
+      if (e.key === 'g' && !inInput) {
+        e.preventDefault();
+        actionRegenerate();
+      }
+      // Keep letter shortcuts out of the typing field, especially during races.
+      if (e.key.toLowerCase() === 'd' && !inInput && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        document.body.classList.toggle('light');  // toggle_dark equivalent
+      }
+      // Escape from input → reset
+      if (e.key === 'Escape' && inInput) {
+        actionReset();
+      }
+    });
+
+    // ── on_mount equivalent: fetch first quote on page load ───────
+    //   Textual: async def on_mount(self): ... await self.action_regenerate()
+    actionRegenerate();
+  </script>
+
+</body>
+</html>
