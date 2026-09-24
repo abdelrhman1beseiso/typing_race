@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.utils import timezone
+from datetime import timedelta
 import httpx
 from unittest.mock import patch
 
@@ -31,7 +33,13 @@ class RaceFlowTests(TestCase):
         self.assertEqual(self.client.post(f'/race/{code}/progress/', {
             'progress': 1, 'wpm': 1, 'accuracy': 1,
         }).status_code, 409)
-        self.assertEqual(self.client.post(f'/race/{code}/start/').status_code, 200)
+        started = self.client.post(f'/race/{code}/start/')
+        self.assertEqual(started.status_code, 200)
+        self.assertGreater(started.json()['starts_at'], int(timezone.now().timestamp() * 1000))
+        self.assertEqual(self.client.post(f'/race/{code}/progress/', {
+            'progress': 2, 'wpm': 2, 'accuracy': 2,
+        }).status_code, 409)
+        RaceSession.objects.filter(code=code).update(started_at=timezone.now() - timedelta(seconds=1))
         response = self.client.post(f'/race/{code}/progress/', {'progress': 50, 'wpm': 42, 'accuracy': 96})
         self.assertEqual(response.status_code, 200)
         state = self.client.get(f'/race/{code}/state/').json()
@@ -42,6 +50,7 @@ class RaceFlowTests(TestCase):
     def test_progress_is_bounded_and_invalid_data_rejected(self):
         code = self.create_room().json()['code']
         self.client.post(f'/race/{code}/start/')
+        RaceSession.objects.filter(code=code).update(started_at=timezone.now() - timedelta(seconds=1))
         response = self.client.post(f'/race/{code}/progress/', {'progress': 999, 'wpm': 5000, 'accuracy': -2})
         self.assertEqual(response.status_code, 200)
         participant = RaceParticipant.objects.get(race__code=code)
@@ -58,7 +67,13 @@ class RaceFlowTests(TestCase):
         self.assertFalse(joiner_state['can_start'])
         self.assertTrue(self.client.get(f'/race/{code}/state/').json()['can_start'])
         self.assertEqual(joiner.post(f'/race/{code}/start/').status_code, 403)
-        self.assertEqual(self.client.post(f'/race/{code}/start/').status_code, 200)
+        started = self.client.post(f'/race/{code}/start/')
+        self.assertEqual(started.status_code, 200)
+        waiting_state = joiner.get(f'/race/{code}/state/').json()
+        self.assertFalse(waiting_state['started'])
+        self.assertEqual(waiting_state['starts_at'], started.json()['starts_at'])
+        self.assertFalse(waiting_state['can_start'])
+        RaceSession.objects.filter(code=code).update(started_at=timezone.now() - timedelta(seconds=1))
         self.assertTrue(joiner.get(f'/race/{code}/state/').json()['started'])
         self.assertEqual(joiner.post(f'/race/{code}/join/', {'name': 'Late guest'}).status_code, 409)
 

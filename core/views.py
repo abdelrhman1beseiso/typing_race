@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
 from django.utils import timezone
+from datetime import timedelta
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import RaceParticipant, RaceSession
@@ -97,11 +98,14 @@ def join_race(request, code):
 @require_GET
 def race_state(request, code):
     race = get_object_or_404(RaceSession, code=code.upper())
+    now = timezone.now()
+    starts_at = race.started_at
     participants = list(race.participants.order_by('-progress', 'joined_at'))
     return JsonResponse({
         'code': race.code, 'quote': race.quote,
-        'started': race.started_at is not None,
-        'can_start': bool(request.session.session_key and race.participants.filter(
+        'started': bool(starts_at and starts_at <= now),
+        'starts_at': int(starts_at.timestamp() * 1000) if starts_at else None,
+        'can_start': bool(starts_at is None and request.session.session_key and race.participants.filter(
             session_key=request.session.session_key, is_host=True).exists()),
         'participant_count': len(participants),
         'participants': [{'name': p.display_name, 'progress': p.progress, 'wpm': p.wpm,
@@ -121,9 +125,13 @@ def start_race(request, code):
         if not host:
             return JsonResponse({'error': 'Only the room host can start this race.'}, status=403)
         if race.started_at is None:
-            race.started_at = timezone.now()
+            race.started_at = timezone.now() + timedelta(seconds=5)
             race.save(update_fields=['started_at'])
-    return JsonResponse({'ok': True, 'started': True})
+    return JsonResponse({
+        'ok': True,
+        'starts_at': int(race.started_at.timestamp() * 1000),
+        'started': race.started_at <= timezone.now(),
+    })
 
 
 @require_POST
@@ -148,7 +156,7 @@ def update_progress(request, code):
     race = get_object_or_404(RaceSession, code=code.upper())
     key, _ = _participant_identity(request)
     participant = get_object_or_404(RaceParticipant, race=race, session_key=key)
-    if race.started_at is None:
+    if race.started_at is None or race.started_at > timezone.now():
         return JsonResponse({'error': 'The host has not started this race yet.'}, status=409)
     try:
         progress = max(0, min(100, int(request.POST.get('progress', '0'))))
