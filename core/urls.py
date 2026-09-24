@@ -11,5 +11,7 @@ urlpatterns = [
     path('race/create/', views.create_race, name='create_race'),
     path('race/<str:code>/join/', views.join_race, name='join_race'),
     path('race/<str:code>/state/', views.race_state, name='race_state'),
+    path('race/<str:code>/start/', views.start_race, name='start_race'),
+    path('race/<str:code>/quote/', views.change_race_quote, name='change_race_quote'),
     path('race/<str:code>/progress/', views.update_progress, name='update_progress'),
 ]

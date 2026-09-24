@@ -37,12 +37,23 @@
     .room-share-label { display:block; margin-bottom:.35rem; font: .64rem var(--mono); letter-spacing:.13em; text-transform:uppercase; color:var(--text-muted); }
     .room-share-code { display:block; color:var(--accent); font:700 1.45rem var(--mono); letter-spacing:.16em; font-variant-numeric:tabular-nums; }
     .room-share-hint { color:var(--text-muted); font-size:.77rem; margin-top:.3rem; }
+    .solo-room-note { width:min(560px,100%); margin:1rem auto; padding:.8rem; border:1px solid var(--border); border-radius:10px; color:var(--text-muted); background:var(--surface); }
     #copy-room-code { flex:none; background:var(--accent)!important; color:#1c2413!important; font-size:.8rem; font-weight:700; }
     #race-list { width:min(560px,100%); margin:1rem auto; text-align:left; list-style:none; padding:0; color:var(--text-muted); display:grid; gap:.55rem; }
     .racer-row { display:grid; grid-template-columns:minmax(120px,1fr) auto auto; align-items:center; gap:.9rem; padding:.8rem 1rem; border:1px solid var(--border); border-radius:11px; background:var(--surface); }
     .racer-name { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .racer-progress { color:var(--text-muted); font:.78rem var(--mono); font-variant-numeric:tabular-nums; }
     .racer-metrics { display:flex; gap:.7rem; color:var(--accent); font:.76rem var(--mono); white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .race-lobby { width:min(560px,100%); margin:.5rem auto 1rem; padding:1rem 1.1rem; border:1px solid #d6f36a33; border-radius:12px; background:#d6f36a0b; }
+    #lobby-message { margin:0 0 .75rem; color:var(--text-muted); font-size:.88rem; }
+    #host-start-race { padding:.75rem 1.3rem; border:0; border-radius:999px; color:#18200f; background:var(--accent); font-weight:700; box-shadow:0 8px 24px #d6f36a20; }
+    #change-race-quote { padding:.75rem 1.1rem; border:1px solid var(--border); border-radius:999px; color:var(--text); background:var(--surface-2); font-weight:600; }
+    #change-race-quote:hover:not(:disabled) { border-color:var(--accent); }
+    #change-race-quote:disabled, #host-start-race:disabled { opacity:.55; cursor:wait; }
+    .lobby-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:.35rem; }
+    .progress-track { position:relative; width:clamp(120px,25vw,210px); height:26px; overflow:hidden; border:1px solid var(--border); border-radius:999px; background:var(--surface-2); }
+    .progress-fill { position:absolute; inset:0 auto 0 0; width:0; border-radius:inherit; background:linear-gradient(90deg,#a7cc43,var(--accent)); transition:width .35s ease; }
+    .progress-value { position:absolute; inset:0; display:grid; place-items:center; color:var(--text); font:600 .68rem var(--mono); font-variant-numeric:tabular-nums; text-shadow:0 1px 3px #0008; }
     .text-box { position:relative; width:100%; max-width:none; min-height:200px; padding:2rem clamp(1.2rem,5vw,3rem); border:1px solid var(--border); border-radius:var(--radius); background:linear-gradient(140deg,#1b201a,#151914); overflow:hidden; }
     .text-box-label { color:var(--accent); font: .68rem var(--mono); text-transform:uppercase; letter-spacing:.14em; margin-bottom:1rem; }
     #text-display { font:clamp(1.1rem,2.2vw,1.55rem)/1.9 var(--mono); color:#c7cebd; word-break:break-word; min-height:4rem; transition:filter .45s ease,opacity .45s ease; }
@@ -380,6 +391,7 @@
     .racer-progress,.racer-metrics { font:.76rem var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap; }
     .racer-progress { color:var(--text-muted); }
     .racer-metrics { display:flex; gap:.7rem; color:var(--accent); }
+    .status-dot.waiting { background:var(--warn); animation:pulse 1.4s infinite; }
     .text-box { position:relative; max-width:none; min-height:200px; padding:2rem clamp(1.2rem,5vw,3rem); border:1px solid var(--border); border-radius:var(--radius); background:linear-gradient(140deg,#1b201a,#151914); overflow:hidden; }
     .text-box.locked #text-display { filter:blur(7px); opacity:.52; user-select:none; }
     .text-box.locked::after { content:'YOUR TEXT IS WAITING'; position:absolute; inset:auto 0 1.3rem; text-align:center; color:#d6f36a88; font: .65rem var(--mono); letter-spacing:.2em; pointer-events:none; }
@@ -388,6 +400,21 @@
     .status-bar { border:1px solid var(--border); border-radius:10px; background:var(--surface); padding:.8rem 1rem; }
     footer { background:transparent; border-top:1px solid #ffffff12; }
     @media(max-width:600px) { .race-panel h2 { font-size:2.7rem; } .mode-options { flex-direction:column; align-items:stretch; } .mode-card { width:100%; } }
+    @media(max-width:560px) { .racer-row { grid-template-columns:minmax(0,1fr) auto; gap:.5rem; } .racer-name { grid-column:1; } .progress-track { grid-column:1; width:100%; } .racer-metrics { grid-column:2; grid-row:1/3; flex-direction:column; gap:.3rem; align-items:flex-end; } }
+    :root { --bg:#10130f; --surface:#181d17; --surface-2:#22291f; --border:#343d30; --text:#e6e9df; --text-muted:#929b87; --accent:#d6f36a; --accent-dim:#303b21; --success:#b6e36c; --error:#ff806d; --error-dim:#401e19; --warn:#e7be61; --mono:'IBM Plex Mono',monospace; --sans:'Inter',sans-serif; --radius:14px; --transition:.18s ease; }
+    body { color:var(--text); background:radial-gradient(ellipse at 50% -25%,#354029 0,transparent 50%),var(--bg); }
+    body.light { --bg:#e9ecdf; --surface:#f7f8f1; --surface-2:#e2e7d5; --border:#c7cfb7; --text:#252b20; --text-muted:#737d67; --accent:#536b27; --accent-dim:#d8e1c3; }
+    .text-box { box-shadow:0 18px 55px #0002; }
+    .text-box:not(.locked) { border-color:#d6f36a55; }
+    #input-field { transition:border-color .2s ease,box-shadow .2s ease,background .2s ease; }
+    #input-field:focus { box-shadow:0 0 0 4px #d6f36a1c; }
+    #input-field:disabled { cursor:not-allowed; }
+    .mode-card { min-height:82px; box-shadow:0 8px 25px #0002; }
+    .racer-row { transition:border-color .2s ease,transform .2s ease; }
+    .racer-row:hover { border-color:#d6f36a55; transform:translateY(-1px); }
+    #results-card.visible { animation:card-in .3s ease both; }
+    @keyframes card-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
   </style>
 </head>
 <body>
@@ -426,7 +453,13 @@
           <input id="room-code" maxlength="8" placeholder="ROOM CODE" aria-label="Room code">
           <button id="join-race" type="button">Join room</button>
         </div>
-        <div id="room-status" aria-live="polite"></div><ol id="race-list"></ol>
+        <div id="room-status" aria-live="polite"></div>
+        <div id="race-lobby" class="race-lobby" hidden>
+          <p id="lobby-message" aria-live="polite">Waiting for racers to join…</p>
+          <div class="lobby-actions"><button id="change-race-quote" type="button" hidden>Change quote ↻</button>
+          <button id="host-start-race" type="button" hidden>Start race</button></div>
+        </div>
+        <ol id="race-list"></ol>
       </div>
     </section>
 
@@ -501,7 +534,8 @@
   </footer>
 
   <script>
-    let raceIdentity = null, activeRace = null, racePoll = null, progressTimer = null;
+    let raceIdentity = null, activeRace = null, racePoll = null, progressTimer = null, raceStarted = false;
+    let progressTimeout = null, latestProgress = null, progressRequests = Promise.resolve();
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
     const identityLabel = document.getElementById('identity-label');
     document.getElementById('guest-choice').addEventListener('click', () => chooseRaceIdentity('Guest'));
@@ -520,35 +554,77 @@
       if (!response.ok) throw new Error(data.error || 'Race request failed');
       return data;
     }
+    function queueRaceProgress(stats, immediate=false) {
+      latestProgress = stats;
+      if (progressTimeout) clearTimeout(progressTimeout);
+      progressTimeout = setTimeout(() => {
+        const payload = latestProgress;
+        latestProgress = null;
+        progressTimeout = null;
+        progressRequests = progressRequests
+          .then(() => raceRequest(`/race/${activeRace}/progress/`, 'POST', payload))
+          .catch(() => {});
+      }, immediate ? 0 : 500);
+    }
     function raceName() { return raceIdentity === 'Guest' ? (sessionStorage.raceName ||= `Guest-${Math.floor(1000+Math.random()*9000)}`) : ''; }
-    async function enterRace(code=null) {
+    async function enterRace(code=null, friendMode=false) {
       if (!raceIdentity) return;
       if (racePoll) clearInterval(racePoll);
       if (progressTimer) clearInterval(progressTimer);
+      raceStarted = false;
       const body = {name: raceName()};
       let data;
       if (code) data = await raceRequest(`/race/${encodeURIComponent(code)}/join/`, 'POST', body);
-      else {
-        const quoteResponse = await fetch('/quote/'); const quoteData = await quoteResponse.json();
-        data = await raceRequest('/race/create/', 'POST', {...body, quote: quoteData.quote});
-      }
+      else data = await raceRequest('/race/create/', 'POST', body);
       activeRace = data.code;
       targetText = data.quote; actionReset(); renderText('');
-      document.getElementById('quote-card').classList.remove('locked');
+      document.getElementById('quote-card').classList.add('locked');
       document.getElementById('race-actions').querySelector('.mode-options').hidden = true;
       document.getElementById('friend-options').hidden = true;
       document.getElementById('launch-race').hidden = true;
       identityLabel.textContent = raceIdentity === 'Account' ? `Racing as {{ user.username|escapejs }} · room ${data.code}` : `Racing as ${data.name} · room ${data.code}`;
-      document.getElementById('room-status').innerHTML = `<div class="room-share-card"><div class="room-share-copy"><span class="room-share-label">Invite a friend · room code</span><strong class="room-share-code">${escapeHtml(activeRace)}</strong><div class="room-share-hint">Send this code to anyone you want in your race.</div></div><button id="copy-room-code" type="button" data-code="${escapeHtml(activeRace)}">Copy code</button></div>`;
-      inputField.disabled = false; inputField.focus();
+      document.getElementById('room-status').innerHTML = friendMode
+        ? `<div class="room-share-card"><div class="room-share-copy"><span class="room-share-label">Invite a friend · room code</span><strong class="room-share-code">${escapeHtml(activeRace)}</strong><div class="room-share-hint">Send this code to anyone you want in your race.</div></div><button id="copy-room-code" type="button" data-code="${escapeHtml(activeRace)}">Copy code</button></div>`
+        : '<div class="solo-room-note">Solo run · just you and the clock. Start when you’re ready.</div>';
+      document.getElementById('race-lobby').hidden = false;
+      inputField.disabled = true;
       racePoll = setInterval(refreshRace, 1200); refreshRace();
     }
     async function refreshRace() {
       if (!activeRace) return;
       try {
         const state = await raceRequest(`/race/${activeRace}/state/`);
-        document.getElementById('race-list').innerHTML = state.participants.map(p => `<li class="racer-row"><span class="racer-name">${escapeHtml(p.name)}${p.finished ? ' ✓' : ''}</span><span class="racer-progress">${p.progress}%</span><span class="racer-metrics"><span>${p.wpm} WPM</span><span>${p.accuracy}% ACC</span></span></li>`).join('');
-      } catch (e) { document.getElementById('room-status').textContent = e.message; }
+        document.getElementById('race-list').innerHTML = state.participants.map(p => `<li class="racer-row"><span class="racer-name">${escapeHtml(p.name)}${p.finished ? ' ✓' : ''}</span><div class="progress-track" role="progressbar" aria-label="${escapeHtml(p.name)} completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${p.progress}"><span class="progress-fill" style="width:${p.progress}%"></span><span class="progress-value">${p.progress}%</span></div><span class="racer-metrics"><span>${p.wpm} WPM</span><span>${p.accuracy}% ACC</span></span></li>`).join('');
+        const lobbyMessage = document.getElementById('lobby-message');
+        const startButton = document.getElementById('host-start-race');
+        const changeQuoteButton = document.getElementById('change-race-quote');
+        if (!raceStarted && targetText !== state.quote) {
+          targetText = state.quote;
+          actionReset();
+          renderText('');
+        }
+        if (state.started) {
+          const justStarted = !raceStarted;
+          raceStarted = true;
+          document.getElementById('quote-card').classList.remove('locked');
+          inputField.disabled = false;
+          lobbyMessage.textContent = 'Race is live. Find your rhythm!';
+          startButton.hidden = true;
+          changeQuoteButton.hidden = true;
+          if (justStarted) {
+            inputField.focus();
+            setStatus('Ready');
+          }
+        } else {
+          inputField.disabled = true;
+          lobbyMessage.textContent = state.can_start
+            ? `${state.participant_count} racer${state.participant_count === 1 ? '' : 's'} in the room. Start when everyone is ready.`
+            : 'You’re in the room. The host will start the race when everyone is ready.';
+          startButton.hidden = !state.can_start;
+          changeQuoteButton.hidden = !state.can_start;
+          setStatus('Waiting');
+        }
+      } catch (e) { document.getElementById('lobby-message').textContent = e.message; }
     }
     function escapeHtml(value) { const el = document.createElement('span'); el.textContent = value; return el.innerHTML; }
     document.getElementById('room-status').addEventListener('click', async event => {
@@ -557,13 +633,36 @@
       try { await navigator.clipboard.writeText(button.dataset.code); button.textContent = 'Copied'; }
       catch (_) { button.textContent = button.dataset.code; }
     });
+    document.getElementById('host-start-race').addEventListener('click', async () => {
+      const button = document.getElementById('host-start-race');
+      button.disabled = true;
+      try {
+        await raceRequest(`/race/${activeRace}/start/`, 'POST', {});
+        await refreshRace();
+      } catch (e) {
+        document.getElementById('lobby-message').textContent = e.message;
+        button.disabled = false;
+      }
+    });
+    document.getElementById('change-race-quote').addEventListener('click', async () => {
+      const button = document.getElementById('change-race-quote');
+      button.disabled = true;
+      try {
+        await raceRequest(`/race/${activeRace}/quote/`, 'POST', {});
+        await refreshRace();
+      } catch (e) {
+        document.getElementById('lobby-message').textContent = e.message;
+      } finally {
+        if (!raceStarted) button.disabled = false;
+      }
+    });
     document.getElementById('launch-race').addEventListener('click', () => {
       if (raceIdentity) document.getElementById('race-actions').hidden = false;
     });
     document.getElementById('start-race').addEventListener('click', () => enterRace().catch(e => document.getElementById('room-status').textContent=e.message));
     document.getElementById('friend-mode').addEventListener('click', () => { document.getElementById('friend-options').hidden = false; });
-    document.getElementById('create-friend-race').addEventListener('click', () => enterRace().catch(e => document.getElementById('room-status').textContent=e.message));
-    document.getElementById('join-race').addEventListener('click', () => enterRace(document.getElementById('room-code').value.trim()).catch(e => document.getElementById('room-status').textContent=e.message));
+    document.getElementById('create-friend-race').addEventListener('click', () => enterRace(null, true).catch(e => document.getElementById('room-status').textContent=e.message));
+    document.getElementById('join-race').addEventListener('click', () => enterRace(document.getElementById('room-code').value.trim(), true).catch(e => document.getElementById('room-status').textContent=e.message));
     /**
      * TypingTest — Web port of the Textual app
      *
@@ -701,7 +800,7 @@
         // Match the final result card: accuracy is correct characters / target length.
         const accuracy = targetText.length ? Math.round(correct / targetText.length * 100) : 0;
         const wpm = Math.max(0, Math.floor((correct / 5) / ((Date.now() - startTime) / 60000)));
-        raceRequest(`/race/${activeRace}/progress/`, 'POST', {progress, wpm, accuracy}).catch(() => {});
+        queueRaceProgress({progress, wpm, accuracy}, typed.length >= targetText.length);
       }
 
       // Completion check (mirrors: if len(typed_text) >= len(self.target_text))
@@ -751,9 +850,9 @@
       setWpm(0);
 
       inputField.classList.remove('error');
-      inputField.disabled = false;
+      inputField.disabled = !raceStarted;
       inputField.value    = '';
-      inputField.focus();
+      if (raceStarted) inputField.focus();
 
       resultsCard.classList.remove('visible');
       renderText('');
@@ -824,7 +923,7 @@
       }
       if (e.key === 'g' && !inInput) {
         e.preventDefault();
-        actionRegenerate();
+        if (!activeRace) actionRegenerate();
       }
       // Keep letter shortcuts out of the typing field, especially during races.
       if (e.key.toLowerCase() === 'd' && !inInput && !e.ctrlKey && !e.metaKey && !e.altKey) {

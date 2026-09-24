@@ -20,9 +20,9 @@ Apply the database schema once with `python manage.py migrate`, then open **http
 
 ## Race rooms
 
-Before starting a race, choose **Continue as guest** or select the signed-in account. Guests receive a browser-session identity; accounts use Django's built-in authentication. Choose **Start a new race** to create a room and share its six-character code, or enter a code to join an existing room. Typing progress and results are stored per room and refreshed for other racers about once per second. Each room has its own quote and participant list. New accounts can be created from the page; existing accounts can use **Sign in**.
+Before starting, choose a guest identity or signed-in account, then choose a solo race or a friend room. A room creator is its host. Participants can join while the room is waiting; only the host can start the race. Once started, participants see live progress bars, WPM, and accuracy. The quote is randomly selected from a bundled collection, so races do not depend on an external quote API. New accounts can be created from the page; existing accounts can use **Sign in**.
 
-The app uses database-backed race rooms and browser sessions. SQLite is suitable for local development and light use. For a busy public deployment, configure PostgreSQL through Django's `DATABASES` setting and run multiple Django workers behind an application server; the race API is HTTP polling, so no WebSocket server is needed. Quote loading falls back to bundled sample quotes when the external quote API is unavailable.
+The app uses database-backed race rooms and browser sessions. SQLite is suitable for local development and light use. For a busy public deployment, configure PostgreSQL through Django's `DATABASES` setting and run multiple Django workers behind an application server; the race API uses HTTP polling, so no WebSocket server is needed.
 
 Run the checks with `python manage.py check` and the workflow tests with `python manage.py test core`.
 
@@ -30,7 +30,7 @@ Run the checks with `python manage.py check` and the workflow tests with `python
 
 | Key | Action |
 |-----|--------|
-| `G` | Generate a new quote |
+| `G` | Generate a new quote before joining a race |
 | `R` | Reset the current test |
 | `D` | Toggle dark / light theme |
 | `Esc` | Reset (while typing) |

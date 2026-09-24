@@ -1,23 +1,39 @@
 import random
 import string
-
 import httpx
+
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import RaceParticipant, RaceSession
 
 
-FALLBACK_QUOTES = [
-    'The secret of getting ahead is getting started.',
-    'Great things are done by a series of small things brought together.',
-    'It always seems impossible until it is done.',
-]
+QUOTE_API_URL = 'https://dummyjson.com/quotes/random'
+QUOTE_FALLBACK = (
+    'Take a breath, find your rhythm, and keep moving forward. Each careful step gives you '
+    'a little more confidence, and every new attempt is a chance to discover what you can do.'
+)
+
+
+def fetch_random_quote():
+    """Fetch one quote from DummyJSON, using a local safety net if it is unavailable."""
+    try:
+        response = httpx.get(QUOTE_API_URL, timeout=5.0)
+        response.raise_for_status()
+        payload = response.json()
+        quote = payload.get('quote', '').strip()
+        author = payload.get('author', '').strip()
+        if not quote:
+            raise ValueError('The quote API returned an empty quote.')
+        return quote[:1000], author[:120]
+    except (httpx.HTTPError, ValueError, TypeError, AttributeError):
+        return QUOTE_FALLBACK, ''
 
 
 def index(request):
@@ -26,15 +42,8 @@ def index(request):
 
 @require_GET
 def random_quote(request):
-    try:
-        res = httpx.get('https://dummyjson.com/quotes/random', timeout=5.0)
-        res.raise_for_status()
-        data = res.json()
-        if not isinstance(data.get('quote'), str) or not data['quote'].strip():
-            raise ValueError('Quote service returned invalid data')
-        return JsonResponse({'quote': data['quote'], 'author': data.get('author', '')})
-    except (httpx.RequestError, httpx.HTTPStatusError, ValueError, TypeError):
-        return JsonResponse({'quote': random.choice(FALLBACK_QUOTES), 'author': ''})
+    quote, author = fetch_random_quote()
+    return JsonResponse({'quote': quote, 'author': author})
 
 
 @require_POST
@@ -61,16 +70,19 @@ def create_race(request):
     session_key, name = _participant_identity(request, request.POST.get('name', ''))
     quote = request.POST.get('quote', '').strip()
     if not quote:
-        quote = random.choice(FALLBACK_QUOTES)
+        quote, _ = fetch_random_quote()
     race = RaceSession.objects.create(code=RaceSession.new_code(), quote=quote[:1000])
     RaceParticipant.objects.create(race=race, session_key=session_key, display_name=name,
-                                   user=request.user if request.user.is_authenticated else None)
+                                   user=request.user if request.user.is_authenticated else None,
+                                   is_host=True)
     return JsonResponse({'code': race.code, 'quote': race.quote, 'name': name})
 
 
 @require_POST
 def join_race(request, code):
     race = get_object_or_404(RaceSession, code=code.upper())
+    if race.started_at is not None:
+        return JsonResponse({'error': 'This race has already started.'}, status=409)
     session_key, name = _participant_identity(request, request.POST.get('name', ''))
     participant, created = RaceParticipant.objects.get_or_create(
         race=race, session_key=session_key,
@@ -89,6 +101,9 @@ def race_state(request, code):
     return JsonResponse({
         'code': race.code, 'quote': race.quote,
         'started': race.started_at is not None,
+        'can_start': bool(request.session.session_key and race.participants.filter(
+            session_key=request.session.session_key, is_host=True).exists()),
+        'participant_count': len(participants),
         'participants': [{'name': p.display_name, 'progress': p.progress, 'wpm': p.wpm,
                           'accuracy': p.accuracy, 'finished': p.finished_at is not None}
                          for p in participants],
@@ -96,10 +111,45 @@ def race_state(request, code):
 
 
 @require_POST
+def start_race(request, code):
+    key = request.session.session_key
+    if not key:
+        return JsonResponse({'error': 'Join this room before starting it.'}, status=403)
+    with transaction.atomic():
+        race = get_object_or_404(RaceSession.objects.select_for_update(), code=code.upper())
+        host = race.participants.filter(session_key=key, is_host=True).exists()
+        if not host:
+            return JsonResponse({'error': 'Only the room host can start this race.'}, status=403)
+        if race.started_at is None:
+            race.started_at = timezone.now()
+            race.save(update_fields=['started_at'])
+    return JsonResponse({'ok': True, 'started': True})
+
+
+@require_POST
+def change_race_quote(request, code):
+    key = request.session.session_key
+    if not key:
+        return JsonResponse({'error': 'Join this room before changing its quote.'}, status=403)
+    with transaction.atomic():
+        race = get_object_or_404(RaceSession.objects.select_for_update(), code=code.upper())
+        host = race.participants.filter(session_key=key, is_host=True).exists()
+        if not host:
+            return JsonResponse({'error': 'Only the room host can change this quote.'}, status=403)
+        if race.started_at is not None:
+            return JsonResponse({'error': 'The quote is locked once the race starts.'}, status=409)
+        race.quote, _ = fetch_random_quote()
+        race.save(update_fields=['quote'])
+    return JsonResponse({'ok': True, 'quote': race.quote})
+
+
+@require_POST
 def update_progress(request, code):
     race = get_object_or_404(RaceSession, code=code.upper())
     key, _ = _participant_identity(request)
     participant = get_object_or_404(RaceParticipant, race=race, session_key=key)
+    if race.started_at is None:
+        return JsonResponse({'error': 'The host has not started this race yet.'}, status=409)
     try:
         progress = max(0, min(100, int(request.POST.get('progress', '0'))))
         wpm = max(0, min(999, int(request.POST.get('wpm', '0'))))
@@ -107,13 +157,11 @@ def update_progress(request, code):
     except (TypeError, ValueError):
         return JsonResponse({'error': 'Invalid race stats.'}, status=400)
     if participant.finished_at is None:
+        progress = max(participant.progress, progress)
         participant.progress, participant.wpm, participant.accuracy = progress, wpm, accuracy
         fields = ['progress', 'wpm', 'accuracy']
         if progress == 100:
             participant.finished_at = timezone.now()
             fields.append('finished_at')
         participant.save(update_fields=fields)
-        if race.started_at is None:
-            race.started_at = timezone.now()
-            race.save(update_fields=['started_at'])
     return JsonResponse({'ok': True})

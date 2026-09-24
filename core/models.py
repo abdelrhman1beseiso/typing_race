@@ -25,6 +25,7 @@ class RaceParticipant(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     session_key = models.CharField(max_length=40)
     display_name = models.CharField(max_length=32)
+    is_host = models.BooleanField(default=False)
     progress = models.PositiveSmallIntegerField(default=0)
     wpm = models.PositiveSmallIntegerField(default=0)
     accuracy = models.PositiveSmallIntegerField(default=0)
